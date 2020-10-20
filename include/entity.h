@@ -9,20 +9,16 @@ namespace spiritsaway::entity_component_event
 	template <typename Component>
 	class base_entity: public poly_hash_factory<base_entity<Component>, shr_ptr_t, std::string>
 	{
-	public:
-		base_entity(Key){};
-	protected:
-		dispatcher<entity_events, std::string> _dispatcher;
-		void InitComponentVec(std::uint8_t sz)
-		{
-			if(!components.empty())
-			{
-				return;  
-			}
-			components = std::vector<Component*>(sz, nullptr);
-		}
 	private:
 		std::vector<Component*> components;
+	public:
+		base_entity(Key)
+		{
+			components = std::vector<Component*>(base_type_hash<Component>::max_used(), nullptr);
+		}
+	protected:
+		dispatcher<entity_events, std::string> _dispatcher;
+
 	public:
 		template<typename C>
 		C* GetComponent()

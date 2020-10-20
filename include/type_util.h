@@ -35,6 +35,10 @@ namespace spiritsaway::entity_component_event
 			static const std::size_t id = last_used_id++;
 			return id;
 		}
+		static std::size_t max_used()
+		{
+			return last_used_id;
+		}
 	};
 	template <typename B>
 	std::size_t base_type_hash<B>::last_used_id = 0;

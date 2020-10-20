@@ -10,7 +10,6 @@ public:
 	AvatarEntity(std::string detail)
 	{
 		std::cout<<"AvatarEntity created with detail "<<detail<<std::endl;
-		InitComponentVec(3);
 	}
 };
 class move_component: public AvatarComponent::sub_class<move_component>
