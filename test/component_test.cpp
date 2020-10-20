@@ -1,9 +1,10 @@
 #include "entity.h"
 #include <iostream>
 using namespace spiritsaway::entity_component_event;
+class AvatarEntity;
+using AvatarComponent = base_component<AvatarEntity, const std::string&>;
 
-
-class AvatarEntity: public base_entity::sub_class<AvatarEntity>
+class AvatarEntity: public base_entity<AvatarComponent>::template sub_class<AvatarEntity>
 {
 public:
 	AvatarEntity(std::string detail)
@@ -12,7 +13,7 @@ public:
 		InitComponentVec(3);
 	}
 };
-class move_component: public base_component<base_entity, const std::string&>::sub_class<move_component>
+class move_component: public AvatarComponent::sub_class<move_component>
 {
 private:
 	void OnEnterSpace(int a)
@@ -20,7 +21,7 @@ private:
 		std::cout<<"move_component OnEnterSpace "<<a<<std::endl;
 	}
 public:
-	move_component(base_entity* owner, const std::string& a)
+	move_component(const std::string& a)
 	{
 		std::cout<<"move_component init with "<<a<<std::endl;
 	}
@@ -47,8 +48,9 @@ public:
 };
 int main()
 {
-	auto cur_avatar = base_entity::make<AvatarEntity>("lalla");
-	cur_avatar->AddComponent<move_component>("heheh");
+	auto cur_avatar = base_entity<AvatarComponent>::make<AvatarEntity>(std::string("lalla"));
+	auto cur_comp = AvatarComponent::make<move_component>(std::string("heheh"));
+	cur_avatar->AddComponent(cur_comp);
 	auto cur_component = cur_avatar->GetComponent<move_component>();
 	cur_avatar->DispatchEvent(entity_events::OnEnterSpace, 1);
 	cur_avatar->RemoveComponent<move_component>();

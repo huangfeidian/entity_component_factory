@@ -6,11 +6,11 @@
 
 namespace spiritsaway::entity_component_event
 {
-	class base_entity: public poly_hash_factory<base_entity, shr_ptr_t, std::string>
+	template <typename Component>
+	class base_entity: public poly_hash_factory<base_entity<Component>, shr_ptr_t, std::string>
 	{
 	public:
 		base_entity(Key){};
-		using Component = base_component<base_entity, const std::string&>;
 	protected:
 		dispatcher<entity_events, std::string> _dispatcher;
 		void InitComponentVec(std::uint8_t sz)
@@ -39,25 +39,23 @@ namespace spiritsaway::entity_component_event
 			}
 			return dynamic_cast<C*>(cur_val);
 		}
+
 		template <typename C>
-		C* AddComponent(const std::string& arg)
+		bool AddComponent(C* comp)
 		{
 			auto cur_hash_id = base_type_hash<Component>::template hash<C>();
-			if(cur_hash_id >= components.size())
+			if (cur_hash_id >= components.size())
 			{
-				return {};
+				return false;
 			}
 			auto cur_val = components[cur_hash_id];
-			if(cur_val)
+			if (cur_val)
 			{
-				delete cur_val;
+				return false;
 			}
-			auto new_val = Component::make<C>(this, arg);
-			components[cur_hash_id] = static_cast<Component*>(new_val);
-			new_val->SetOwner(this);
-			return new_val;
+			components[cur_hash_id] = dynamic_cast<Component*>(comp);
+			return true;
 		}
-
 		template <typename C>
 		bool RemoveComponent()
 		{
