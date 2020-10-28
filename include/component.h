@@ -6,10 +6,10 @@
 namespace spiritsaway::entity_component_event
 {
 	template <typename BaseEntity, typename... Args>
-	class base_component: public poly_hash_factory<base_component<BaseEntity, Args...>, raw_ptr_t, Args&&...>
+	class base_component
 	{
 	public:
-		base_component(Key )
+		base_component()
 		{
 
 		}

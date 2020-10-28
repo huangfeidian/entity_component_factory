@@ -252,7 +252,15 @@ namespace spiritsaway::entity_component_event
 			return true;
 		}
 	};
-
+	template <typename T>
+	class MakeFinal
+	{
+	private:
+		MakeFinal()
+		{
+		};
+		friend T;
+	};
 
 	template <class CreateMapT, template<typename ...> class ptr_t, 
 			  class Base, class... Args>
@@ -267,7 +275,7 @@ namespace spiritsaway::entity_component_event
 		}
 
 		template <class T, class B = Base>
-		struct sub_class : B
+		struct sub_class : public B, virtual public MakeFinal<T>
 		{
 			friend T;
 
@@ -278,7 +286,7 @@ namespace spiritsaway::entity_component_event
 			static bool registered;
 
 		private:
-			sub_class() : B(Key())
+			sub_class() : B()
 			{
 				(void)registered;
 			}
@@ -287,12 +295,6 @@ namespace spiritsaway::entity_component_event
 		friend Base;
 
 	private:
-		class Key
-		{
-			Key(){};
-			template <class T, class B>
-			friend struct sub_class;
-		};
 		using FuncType = ptr_t<Base> (*)(Args...);
 		basic_poly_factory() = default;
 	};

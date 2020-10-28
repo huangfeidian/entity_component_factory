@@ -3,24 +3,24 @@
 using namespace spiritsaway::entity_component_event;
 using namespace std;
 
-struct Animal : poly_hash_factory<Animal, shr_ptr_t, int> {
-	Animal(Key)
-	{
-	}
- 	virtual void makeNoise() = 0;
+struct Animal
+{
+	virtual void makeNoise() = 0;
 };
+using AnimalFactory = poly_hash_factory<Animal, shr_ptr_t, int>;
 
-class Dog : public Animal::sub_class<Dog> {
+
+class Dog : public AnimalFactory::sub_class<Dog> {
 public:
   Dog(int x) : m_x(x) {}
-
+public:
   void makeNoise() { std::cerr << "Dog: " << m_x << "\n"; }
 
 protected:
   int m_x;
 };
 
-class Cat : public Animal::sub_class<Cat> {
+class Cat : public AnimalFactory::sub_class<Cat> {
 public:
   Cat(int x) : m_x(x) {}
 
@@ -30,8 +30,9 @@ protected:
   int m_x;
 };
 
-//class Husky : public Dog, public Animal::sub_class<Husky>
+//class Husky : public Dog
 //{
+//public:
 //    Husky(int x)
 //        : Dog(x)
 //    {
@@ -43,7 +44,7 @@ protected:
 //    }
 //};
 struct Creature : poly_name_factory<Creature, unq_ptr_t, std::unique_ptr<int>> {
-  Creature(Key) {}
+  Creature() {}
   virtual void makeNoise() = 0;
 };
 
@@ -61,10 +62,21 @@ private:
 
 void test_hash()
 {
-	auto x = Animal::make<Dog>(3);
-	auto y = Animal::make<Cat>(2);
+	auto x = AnimalFactory::make<Dog>(3);
+	auto y = AnimalFactory::make<Cat>(2);
 	x->makeNoise();
 	y->makeNoise();
+	//auto xx = Dog(1);
+	//xx.makeNoise();
+	//auto z = new Husky(4);
+	//if (!z)
+	//{
+	//	std::cerr << "cant create husky by AnimalFactory" << std::endl;
+	//}
+	//else
+	//{
+	//	z->makeNoise();
+	//}
 	
 }
 

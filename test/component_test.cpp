@@ -3,16 +3,18 @@
 using namespace spiritsaway::entity_component_event;
 class AvatarEntity;
 using AvatarComponent = base_component<AvatarEntity, const std::string&>;
+using AvatarComponentFactory = poly_hash_factory<AvatarComponent, raw_ptr_t, const std::string&>;
 
-class AvatarEntity: public base_entity<AvatarComponent>::template sub_class<AvatarEntity>
+class AvatarEntity: public component_entity<AvatarComponent>
 {
 public:
-	AvatarEntity(std::string detail)
+	AvatarEntity(std::string entity_id, std::uint32_t entity_type_id)
+		: component_entity<AvatarComponent>(entity_id, entity_type_id)
 	{
-		std::cout<<"AvatarEntity created with detail "<<detail<<std::endl;
+		std::cout<<"AvatarEntity created with entity_id "<< entity_id <<std::endl;
 	}
 };
-class move_component: public AvatarComponent::sub_class<move_component>
+class move_component: public AvatarComponentFactory::sub_class<move_component>
 {
 private:
 	void OnEnterSpace(int a)
@@ -47,8 +49,8 @@ public:
 };
 int main()
 {
-	auto cur_avatar = base_entity<AvatarComponent>::make<AvatarEntity>(std::string("lalla"));
-	auto cur_comp = AvatarComponent::make<move_component>(std::string("heheh"));
+	auto cur_avatar = component_entity<AvatarComponent>::make<AvatarEntity>(std::string("lalla"));
+	auto cur_comp = AvatarComponentFactory::make<move_component>(std::string("heheh"));
 	cur_avatar->AddComponent(cur_comp);
 	auto cur_component = cur_avatar->GetComponent<move_component>();
 	cur_avatar->DispatchEvent(entity_events::OnEnterSpace, 1);
