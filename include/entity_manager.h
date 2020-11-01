@@ -4,6 +4,15 @@
 
 namespace spiritsaway::entity_component_event
 {
+	class entity_construct_key
+	{
+		entity_construct_key()
+		{
+
+		}
+		friend class entity_manager;
+	};
+
 	class entity_manager
 	{
 		std::unordered_map<std::string, shr_ptr_t<base_entity>> _entities;
@@ -19,25 +28,34 @@ namespace spiritsaway::entity_component_event
 			return the_one;
 		}
 	private:
-		using create_func_T = base_creator_func<shr_ptr_t, base_entity, std::size_t, const std::string&>;
-		using CreateMapT = creator_idx_map<base_entity, create_func_T>;
-		using FuncType = shr_ptr_t<base_entity>(*)(const std::string&);
-
+		static std::unordered_set<std::size_t>& all_registered_class()
+		{
+			static std::unordered_set<std::size_t> data;
+			return data;
+		}
+		
 	public:
+		
 		template <class D>
-		static typename create_func_T::template return_type<D> make(const std::string& str_id)
+		static std::shared_ptr<D> make(const std::string& str_id)
 		{
 			if (instance().has_entity(str_id))
 			{
+				assert(false);
 				return {};
 			}
-			auto result = CreateMapT::template make<D>(base_type_hash<base_entity>::template hash<D>(), str_id);
-			if (result)
+			auto cur_type_id = base_type_hash<base_entity>::template hash<D>();
+			if (all_registered_class().count(cur_type_id) == 0)
 			{
-				instance().add_entity(result);
+				assert(false);
+				return {};
 			}
+
+			auto result = std::make_shared<D>(entity_construct_key(), cur_type_id, str_id);
+			instance().add_entity(result);
 			return result;
 		}
+
 		template <class T, class B = base_entity>
 		struct sub_class : public B
 		{
@@ -45,27 +63,17 @@ namespace spiritsaway::entity_component_event
 
 			static bool trigger()
 			{
-				return type_registration<CreateMapT>::template register_derived<T>();
+				entity_manager::all_registered_class().insert(base_type_hash<base_entity>::template hash<T>());
+				return true;
 			}
 			static bool registered;
 
 		private:
-			sub_class(std::size_t int_type_id, const std::string& str_id)
+			sub_class(entity_construct_key access_key, std::size_t int_type_id, const std::string& str_id)
 				: B(int_type_id, str_id)
-				, access_key()
 			{
 				(void) registered;
 			}
-			class key
-			{
-				key()
-				{
-
-				}
-				template <class T, class B> friend struct sub_class;
-			};
-		private:
-			key access_key;
 		};
 
 		friend base_entity;

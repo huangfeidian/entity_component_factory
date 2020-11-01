@@ -8,8 +8,8 @@ using AvatarComponentFactory = poly_hash_factory<AvatarComponent, raw_ptr_t, con
 class AvatarEntity: public component_entity<AvatarComponent, AvatarEntity>, public entity_manager::sub_class<AvatarEntity>
 {
 public:
-	AvatarEntity(std::size_t entity_type_id, std::string entity_id)
-		: entity_manager::sub_class<AvatarEntity>(entity_type_id, entity_id)
+	AvatarEntity(entity_construct_key access_key, std::size_t entity_type_id, std::string entity_id)
+		: entity_manager::sub_class<AvatarEntity>(access_key, entity_type_id, entity_id)
 		, component_entity<AvatarComponent, AvatarEntity>(this)
 	{
 		std::cout<<"AvatarEntity created with entity_id "<< entity_id <<std::endl;
@@ -21,6 +21,12 @@ protected:
 		component_entity<AvatarComponent, AvatarEntity>::Destroy();
 		entity_manager::sub_class<AvatarEntity>::destroy();
 	}
+public:
+	friend class entity_manager;
+};
+class SomeAvatarEntity : public AvatarEntity
+{
+	using AvatarEntity::AvatarEntity;
 };
 class move_component: public AvatarComponentFactory::sub_class<move_component>
 {
@@ -59,6 +65,8 @@ public:
 int main()
 {
 	auto cur_avatar = entity_manager::make<AvatarEntity>(std::string("lalla"));
+	auto some_avatar = entity_manager::make<SomeAvatarEntity>(std::string("lasa"));
+	// auto temp_avatar = AvatarEntity(entity_construct_key(), 0, "lal");
 	auto cur_comp = AvatarComponentFactory::make<move_component>(std::string("heheh"));
 	cur_avatar->AddComponent(cur_comp);
 	auto cur_component = cur_avatar->GetComponent<move_component>();

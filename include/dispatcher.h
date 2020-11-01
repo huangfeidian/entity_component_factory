@@ -52,7 +52,7 @@ namespace spiritsaway::entity_component_event
 	private:
 		struct event_desc
 		{
-			std::size_t event_id;
+			std::size_t event_id = 0;
 			std::size_t dispatch_depth = 0; // to stop recursive dispatch
 			std::unordered_map<std::size_t, std::vector<std::size_t>> data_callbacks; // data type_id to callbacks
 		};
