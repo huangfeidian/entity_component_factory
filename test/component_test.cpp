@@ -1,15 +1,16 @@
-#include "entity.h"
+#include <entity_manager.h>
 #include <iostream>
 using namespace spiritsaway::entity_component_event;
 class AvatarEntity;
 using AvatarComponent = base_component<AvatarEntity, const std::string&>;
 using AvatarComponentFactory = poly_hash_factory<AvatarComponent, raw_ptr_t, const std::string&>;
 
-class AvatarEntity: public component_entity<AvatarComponent>
+class AvatarEntity: public component_entity<AvatarComponent, AvatarEntity>, public entity_factory::sub_class<AvatarEntity>
 {
 public:
-	AvatarEntity(std::string entity_id, std::uint32_t entity_type_id)
-		: component_entity<AvatarComponent>(entity_id, entity_type_id)
+	AvatarEntity(std::size_t entity_type_id, std::string entity_id)
+		: entity_factory::sub_class<AvatarEntity>(entity_type_id, entity_id)
+		, component_entity<AvatarComponent, AvatarEntity>(this)
 	{
 		std::cout<<"AvatarEntity created with entity_id "<< entity_id <<std::endl;
 	}
@@ -37,6 +38,7 @@ public:
 			this->OnEnterSpace(detail);
 		};
 		AddEventListener(entity_events::OnEnterSpace, cur_callback);
+		std::cout << "OnSetOwner for move_comp" << std::endl;
 	}
 	void OnRemoveOwner() override
 	{
@@ -49,7 +51,7 @@ public:
 };
 int main()
 {
-	auto cur_avatar = component_entity<AvatarComponent>::make<AvatarEntity>(std::string("lalla"));
+	auto cur_avatar = entity_factory::make<AvatarEntity>(std::string("lalla"));
 	auto cur_comp = AvatarComponentFactory::make<move_component>(std::string("heheh"));
 	cur_avatar->AddComponent(cur_comp);
 	auto cur_component = cur_avatar->GetComponent<move_component>();

@@ -6,33 +6,14 @@
 
 namespace spiritsaway::entity_component_event
 {
-	class base_entity
+
+
+	template <typename T>
+	class dispatcher_entity
 	{
-	protected:
-		std::string entity_id;
-		const std::uint32_t entity_type_id = 0;
 	protected:
 		dispatcher<entity_events, std::string> _dispatcher;
 	public:
-		base_entity(const std::string& in_entity_id, std::uint32_t in_entity_type_id)
-			: entity_id(in_entity_id)
-			, entity_type_id(in_entity_type_id)
-		{
-
-		}
-		template <typename T>
-		bool has_type()
-		{
-			auto dest_entity_type_id = base_type_hash<base_entity>::hash<T>();
-			if (dest_entity_type_id != entity_type_id)
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
 		template <typename... Args>
 		auto DispatchEvent(entity_events event, const Args&...  args)
 		{
@@ -66,24 +47,55 @@ namespace spiritsaway::entity_component_event
 		{
 			_dispatcher.clear();
 		}
+	virtual  ~dispatcher_entity()
+		{
+			ClearListeners();
+		}
+	};
+
+	class base_entity: public dispatcher_entity<base_entity>
+	{
+	protected:
+		std::string entity_id;
+		const std::size_t entity_type_id = 0;
+
+	public:
+		base_entity(std::size_t in_entity_type_id, const std::string& in_entity_id)
+			: entity_id(in_entity_id)
+			, entity_type_id(in_entity_type_id)
+		{
+
+		}
+		template <typename T>
+		bool has_type()
+		{
+			auto dest_entity_type_id = base_type_hash<base_entity>::hash<T>();
+			if (dest_entity_type_id != entity_type_id)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+
 
 	public:
 		virtual  ~base_entity()
 		{
 
-			ClearListeners();
-
 		}
 	};
-
-	template <typename Component>
-	class component_entity: public base_entity
+	template <typename Component, typename Entity>
+	class component_entity
 	{
 	private:
 		std::vector<Component*> components;
+		Entity* owner;
 	public:
-		component_entity(const std::string& entity_id, std::uint32_t entity_type_id)
-			: base_entity(entity_id, entity_type_id)
+		component_entity(Entity* in_owner)
+			: owner(in_owner)
 		{
 			components = std::vector<Component*>(base_type_hash<Component>::max_used(), nullptr);
 		}
@@ -120,6 +132,7 @@ namespace spiritsaway::entity_component_event
 				return false;
 			}
 			components[cur_hash_id] = dynamic_cast<Component*>(comp);
+			comp->SetOwner(owner);
 			return true;
 		}
 		template <typename C>

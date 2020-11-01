@@ -14,29 +14,29 @@ namespace spiritsaway::entity_component_event
 	{
 	public:
 		template <typename K>
-		event_data_wrapper(const K& data, std::uint32_t data_type_id)
+		event_data_wrapper(const K& data, std::size_t data_type_id)
 			: data_type(data_type_id)
 			, data_ptr(&data)
 		{
 
 		}
-		std::uint32_t data_type;
+		std::size_t data_type;
 		const void* data_ptr;
 	};
 	template <typename T>
 	class listen_handler
 	{
 	public:
-		listen_handler(std::uint32_t event_id, std::uint32_t data_type_id, std::uint32_t in_callback_id)
+		listen_handler(std::size_t event_id, std::size_t data_type_id, std::size_t in_callback_id)
 			:callback_idx(in_callback_id)
 			, data_type_idx(data_type_id)
 			, event_idx(event_id)
 		{
 
 		}
-		std::uint32_t callback_idx;
-		std::uint32_t data_type_idx;
-		std::uint32_t event_idx;
+		std::size_t callback_idx;
+		std::size_t data_type_idx;
+		std::size_t event_idx;
 
 		void reset()
 		{
@@ -45,21 +45,21 @@ namespace spiritsaway::entity_component_event
 			event_idx = 0;
 		}
 	};
-	const static std::uint32_t max_dispatch_depth = 10;
+	const static std::size_t max_dispatch_depth = 10;
 	template <typename K>
 	class dispatcher_impl
 	{
 	private:
 		struct event_desc
 		{
-			std::uint32_t event_id;
-			std::uint32_t dispatch_depth = 0; // to stop recursive dispatch
-			std::unordered_map<std::uint32_t, std::vector<std::uint32_t>> data_callbacks; // data type_id to callbacks
+			std::size_t event_id;
+			std::size_t dispatch_depth = 0; // to stop recursive dispatch
+			std::unordered_map<std::size_t, std::vector<std::size_t>> data_callbacks; // data type_id to callbacks
 		};
-		std::unordered_map<K, std::uint32_t> event_idxes;
+		std::unordered_map<K, std::size_t> event_idxes;
 		std::vector<event_desc> event_descs;
 		std::vector< std::shared_ptr<std::function<void(const K&, const event_data_wrapper&)>>> handler_to_callbacks;
-		std::vector<std::uint32_t> recycle_callback_idxes;
+		std::vector<std::size_t> recycle_callback_idxes;
 	public:
 		dispatcher_impl()
 		{
@@ -67,7 +67,7 @@ namespace spiritsaway::entity_component_event
 			event_descs.push_back({});
 		}
 	private:
-		std::uint32_t get_next_callback_idx()
+		std::size_t get_next_callback_idx()
 		{
 			if (recycle_callback_idxes.empty())
 			{
@@ -78,7 +78,7 @@ namespace spiritsaway::entity_component_event
 			recycle_callback_idxes.pop_back();
 			return result;
 		}
-		std::uint32_t get_event_idx(const K& event)
+		std::size_t get_event_idx(const K& event)
 		{
 			auto cur_iter = event_idxes.find(event);
 			if (cur_iter != event_idxes.end())
@@ -95,7 +95,7 @@ namespace spiritsaway::entity_component_event
 				return cur_event_idx;
 			}
 		}
-		bool invoke_callback(std::uint32_t callback_idx, const K& event, const event_data_wrapper& event_data)
+		bool invoke_callback(std::size_t callback_idx, const K& event, const event_data_wrapper& event_data)
 		{
 			if (callback_idx == 0 || callback_idx >= handler_to_callbacks.size())
 			{
@@ -112,7 +112,7 @@ namespace spiritsaway::entity_component_event
 		}
 	public:
 		template <typename V>
-		bool dispatch(const K& event, const V& data, std::uint32_t cur_data_type_id)
+		bool dispatch(const K& event, const V& data, std::size_t cur_data_type_id)
 		{
 
 			auto cur_event_desc_iter = event_idxes.find(event);
@@ -134,7 +134,7 @@ namespace spiritsaway::entity_component_event
 				return false;
 			}
 			cur_event_desc.dispatch_depth++;
-			std::vector<std::uint32_t>& cur_callbacks = cur_event_callback_iter->second;
+			std::vector<std::size_t>& cur_callbacks = cur_event_callback_iter->second;
 			auto cur_data_wrapper = event_data_wrapper(data, cur_data_type_id);
 			for (std::size_t i = 0; i < cur_callbacks.size();)
 			{
@@ -155,7 +155,7 @@ namespace spiritsaway::entity_component_event
 			return true;
 		}
 		template <typename V>
-		listen_handler<K> add_listener(const K& event, std::function<void(const K&, const V&)> cur_callback, std::uint32_t cur_data_type_idx)
+		listen_handler<K> add_listener(const K& event, std::function<void(const K&, const V&)> cur_callback, std::size_t cur_data_type_idx)
 		{
 
 			auto cur_callback_idx = get_next_callback_idx();
@@ -205,7 +205,7 @@ namespace spiritsaway::entity_component_event
 	{
 	private:
 		std::tuple<dispatcher_impl<args>...> dispatcher_impls;
-		std::uint32_t last_type_id = 0;
+		std::size_t last_type_id = 0;
 	private:
 		template <typename K>
 		dispatcher_impl<K>& dispatcher_for()
@@ -213,9 +213,9 @@ namespace spiritsaway::entity_component_event
 			return std::get<dispatcher_impl<K>>(dispatcher_impls);
 		}
 		template <class K>
-		std::uint32_t get_type_id()
+		std::size_t get_type_id()
 		{
-			static const std::uint32_t id = ++last_type_id;
+			static const std::size_t id = ++last_type_id;
 			return id;
 		}
 

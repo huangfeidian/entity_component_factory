@@ -35,10 +35,11 @@ namespace spiritsaway::entity_component_event
 		template <class T>
 		static base_creator_func instance()
 		{
-			return [](Args... args) -> raw_return_type
+			func_type temp = [](Args... args) -> raw_return_type
 			{
 				return return_type(nullptr);
 			};
+			return base_creator_func(temp);
 		}
 
 		template <typename D>
@@ -68,10 +69,11 @@ namespace spiritsaway::entity_component_event
 		template <class T>
 		static base_creator_func instance()
 		{
-			return [](Args... args) -> raw_return_type
+			func_type temp = [](Args... args) -> raw_return_type
 			{
 				return std::make_unique<T>(std::forward<Args>(args)...);
 			};
+			return base_creator_func(temp);
 		}
 
 		template <typename D>
@@ -103,10 +105,11 @@ namespace spiritsaway::entity_component_event
 		template <class T>
 		static base_creator_func instance()
 		{
-			return [](Args... args) -> raw_return_type
+			func_type temp = [](Args... args) -> raw_return_type
 			{
 				return std::make_shared<T>(std::forward<Args>(args)...);
 			};
+			return base_creator_func(temp);
 		}
 
 		template <typename D>
@@ -139,10 +142,11 @@ namespace spiritsaway::entity_component_event
 		template <class T>
 		static base_creator_func instance()
 		{
-			return [](Args... args) -> raw_return_type
+			func_type temp = [](Args... args) -> raw_return_type
 			{
 				return new T(std::forward<Args>(args)...);
 			};
+			return base_creator_func(temp);
 		}
 
 		template <typename D, class... Ts>
