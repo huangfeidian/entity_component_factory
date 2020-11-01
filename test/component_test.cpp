@@ -5,14 +5,21 @@ class AvatarEntity;
 using AvatarComponent = base_component<AvatarEntity, const std::string&>;
 using AvatarComponentFactory = poly_hash_factory<AvatarComponent, raw_ptr_t, const std::string&>;
 
-class AvatarEntity: public component_entity<AvatarComponent, AvatarEntity>, public entity_factory::sub_class<AvatarEntity>
+class AvatarEntity: public component_entity<AvatarComponent, AvatarEntity>, public entity_manager::sub_class<AvatarEntity>
 {
 public:
 	AvatarEntity(std::size_t entity_type_id, std::string entity_id)
-		: entity_factory::sub_class<AvatarEntity>(entity_type_id, entity_id)
+		: entity_manager::sub_class<AvatarEntity>(entity_type_id, entity_id)
 		, component_entity<AvatarComponent, AvatarEntity>(this)
 	{
 		std::cout<<"AvatarEntity created with entity_id "<< entity_id <<std::endl;
+	}
+protected:
+	virtual void destroy() override
+	{
+		std::cout << "destroy avatar entity" << std::endl;
+		component_entity<AvatarComponent, AvatarEntity>::Destroy();
+		entity_manager::sub_class<AvatarEntity>::destroy();
 	}
 };
 class move_component: public AvatarComponentFactory::sub_class<move_component>
@@ -51,12 +58,13 @@ public:
 };
 int main()
 {
-	auto cur_avatar = entity_factory::make<AvatarEntity>(std::string("lalla"));
+	auto cur_avatar = entity_manager::make<AvatarEntity>(std::string("lalla"));
 	auto cur_comp = AvatarComponentFactory::make<move_component>(std::string("heheh"));
 	cur_avatar->AddComponent(cur_comp);
 	auto cur_component = cur_avatar->GetComponent<move_component>();
 	cur_avatar->DispatchEvent(entity_events::OnEnterSpace, 1);
 	cur_avatar->RemoveComponent<move_component>();
 	cur_avatar->DispatchEvent(entity_events::OnEnterSpace, 1);
+	entity_manager::instance().destroy_entity(cur_avatar->entity_id());
 	cur_avatar.reset();
 }

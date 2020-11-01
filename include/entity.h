@@ -56,13 +56,15 @@ namespace spiritsaway::entity_component_event
 	class base_entity: public dispatcher_entity<base_entity>
 	{
 	protected:
-		std::string entity_id;
-		const std::size_t entity_type_id = 0;
+		std::string m_entity_id;
+		const std::size_t m_entity_type_id = 0;
+		bool m_destroyed;
 
 	public:
 		base_entity(std::size_t in_entity_type_id, const std::string& in_entity_id)
-			: entity_id(in_entity_id)
-			, entity_type_id(in_entity_type_id)
+			: m_entity_id(in_entity_id)
+			, m_entity_type_id(in_entity_type_id)
+			, m_destroyed(false)
 		{
 
 		}
@@ -70,7 +72,7 @@ namespace spiritsaway::entity_component_event
 		bool has_type()
 		{
 			auto dest_entity_type_id = base_type_hash<base_entity>::hash<T>();
-			if (dest_entity_type_id != entity_type_id)
+			if (dest_entity_type_id != m_entity_type_id)
 			{
 				return false;
 			}
@@ -79,13 +81,32 @@ namespace spiritsaway::entity_component_event
 				return true;
 			}
 		}
+		const std::string& entity_id() const
+		{
+			return m_entity_id;
+		}
 
-
+		std::size_t entity_type_id() const
+		{
+			return m_entity_type_id;
+		}
+		bool is_destroyed() const
+		{
+			return m_destroyed;
+		}
+	protected:
+		virtual void destroy()
+		{
+			m_destroyed = true;
+			ClearListeners();
+		}
 	public:
 		virtual  ~base_entity()
 		{
 
 		}
+	public:
+		friend class entity_manager;
 	};
 	template <typename Component, typename Entity>
 	class component_entity
