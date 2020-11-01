@@ -187,7 +187,7 @@ namespace spiritsaway::entity_component_event
 				return false;
 			}
 			handler_to_callbacks[callback_idx].reset();
-			return false;
+			return true;
 		}
 		void clear()
 		{
