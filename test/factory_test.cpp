@@ -49,19 +49,6 @@ public:
   }
 };
 
-//class Husky : public Dog
-//{
-//public:
-//    Husky(int x)
-//        : Dog(x)
-//    {
-//
-//    }
-//    void makeNoise()
-//    {
-//        std::cerr << "Husky: " << m_x << "\n";
-//    }
-//};
 
 
 
@@ -72,19 +59,6 @@ void test_hash()
 	auto y = AnimalFactory::make<Cat>(2);
 	x->makeNoise();
 	y->makeNoise();
-
-	//auto xx = Dog(1);
-	//xx.makeNoise();
-	//auto z = new Husky(4);
-	//if (!z)
-	//{
-	//	std::cerr << "cant create husky by AnimalFactory" << std::endl;
-	//}
-	//else
-	//{
-	//	z->makeNoise();
-	//}
-	
 }
 
 void test_name()

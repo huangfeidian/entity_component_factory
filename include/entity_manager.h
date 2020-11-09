@@ -12,9 +12,9 @@ namespace spiritsaway::entity_component_event
 		}
 		friend class entity_manager;
 	};
-
 	class entity_manager
 	{
+
 		std::unordered_map<std::string, shr_ptr_t<base_entity>> _entities;
 		entity_manager()
 		{

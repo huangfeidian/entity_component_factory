@@ -3,7 +3,7 @@
 using namespace spiritsaway::entity_component_event;
 class AvatarEntity;
 using AvatarComponent = base_component<AvatarEntity, const std::string&>;
-using AvatarComponentFactory = poly_hash_factory<AvatarComponent, raw_ptr_t, const std::string&>;
+using AvatarComponentFactory = basic_poly_factory<raw_ptr_t, AvatarComponent, const std::string&>;
 
 class AvatarEntity final: public component_entity<AvatarComponent, AvatarEntity>, public entity_manager::sub_class<AvatarEntity>
 {
@@ -13,6 +13,10 @@ public:
 		, component_entity<AvatarComponent, AvatarEntity>(this)
 	{
 		std::cout<<"AvatarEntity created with entity_id "<< entity_id <<std::endl;
+	}
+	static std::string_view  class_name()
+	{
+		return "AvatarEntity";
 	}
 protected:
 	virtual void destroy() override
@@ -34,12 +38,17 @@ private:
 	}
 public:
 	move_component(const std::string& a)
+		:AvatarComponentFactory::sub_class<move_component>(a)
 	{
 		std::cout<<"move_component init with "<<a<<std::endl;
 	}
+	static std::string_view  class_name()
+	{
+		return "move_component";
+	}
 	std::string_view name() const override
 	{
-		return type_name<move_component>();
+		return "move_component";
 	}
 	void OnSetOwner() override
 	{

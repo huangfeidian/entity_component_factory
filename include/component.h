@@ -9,7 +9,7 @@ namespace spiritsaway::entity_component_event
 	class base_component
 	{
 	public:
-		base_component()
+		base_component(Args... args)
 		{
 
 		}
