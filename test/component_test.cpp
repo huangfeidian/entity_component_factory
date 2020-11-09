@@ -5,7 +5,7 @@ class AvatarEntity;
 using AvatarComponent = base_component<AvatarEntity, const std::string&>;
 using AvatarComponentFactory = poly_hash_factory<AvatarComponent, raw_ptr_t, const std::string&>;
 
-class AvatarEntity: public component_entity<AvatarComponent, AvatarEntity>, public entity_manager::sub_class<AvatarEntity>
+class AvatarEntity final: public component_entity<AvatarComponent, AvatarEntity>, public entity_manager::sub_class<AvatarEntity>
 {
 public:
 	AvatarEntity(entity_construct_key access_key, std::size_t entity_type_id, std::string entity_id)
@@ -24,11 +24,8 @@ protected:
 public:
 	friend class entity_manager;
 };
-class SomeAvatarEntity : public AvatarEntity
-{
-	using AvatarEntity::AvatarEntity;
-};
-class move_component: public AvatarComponentFactory::sub_class<move_component>
+
+class move_component final: public AvatarComponentFactory::sub_class<move_component>
 {
 private:
 	void OnEnterSpace(int a)
@@ -65,7 +62,6 @@ public:
 int main()
 {
 	auto cur_avatar = entity_manager::make<AvatarEntity>(std::string("lalla"));
-	auto some_avatar = entity_manager::make<SomeAvatarEntity>(std::string("lasa"));
 	// auto temp_avatar = AvatarEntity(entity_construct_key(), 0, "lal");
 	auto cur_comp = AvatarComponentFactory::make<move_component>(std::string("heheh"));
 	cur_avatar->AddComponent(cur_comp);

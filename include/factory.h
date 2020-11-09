@@ -161,7 +161,7 @@ namespace spiritsaway::entity_component_event
 
 	
 	template <typename Base, typename CreatorFunc>
-	struct creator_idx_map
+	struct creator_by_typeid
 	{
 	private:
 		static std::unordered_map<std::size_t, CreatorFunc> data;
@@ -204,7 +204,7 @@ namespace spiritsaway::entity_component_event
 	};
 
 	template <typename Base, typename CreatorFunc>
-	struct creator_name_map
+	struct creator_by_typename
 	{
 	private:
 	public:
@@ -213,28 +213,26 @@ namespace spiritsaway::entity_component_event
 		static bool add(CreatorFunc f)
 		{
 			static_assert(std::is_base_of_v<Base, T>, "T should be derivate of Base");
-			auto cur_hash = type_name<T>();
+			auto cur_hash = T::class_name();
 			auto& data = GetData();
 			bool result = data.find(cur_hash) != data.end();
 			data[cur_hash] = f;
 			return result;
 		}
-		template <typename T, class... Ts>
-		static auto make(Ts &&... args)
+		template <class... Ts>
+		static auto make_by_name(std::string_view cur_name, Ts &&... args)
 		{
-			static_assert(std::is_base_of_v<Base, T>, "T should be derivate of Base");
-			auto cur_hash = type_name<T>();
 			auto& data = GetData();
-			auto cur_iter = data.find(cur_hash);
+			auto cur_iter = data.find(cur_name);
 			if (cur_iter == data.end())
 			{
 				assert(false);
 
-				return FuncT::template return_type<T>();
+				return FuncT::template return_type<Base>();
 			}
 			else
 			{
-				return cur_iter->second.template create<T>(std::forward<Ts>(args)...);
+				return cur_iter->second.template create<Base>(std::forward<Ts>(args)...);
 			}
 		}
 		static std::unordered_map<std::string_view, CreatorFunc>& GetData()
@@ -256,17 +254,9 @@ namespace spiritsaway::entity_component_event
 			return true;
 		}
 	};
-	template <typename T>
-	class MakeFinal
-	{
-	private:
-		MakeFinal()
-		{
-		};
-		friend T;
-	};
 
-	template <class CreateMapT, template<typename ...> class ptr_t, 
+
+	template <template<typename ...> class ptr_t, 
 			  class Base, class... Args>
 	class basic_poly_factory
 	{
@@ -275,22 +265,30 @@ namespace spiritsaway::entity_component_event
 		template <class D, class... T>
 		static typename create_func_T::template return_type<D> make(T &&... args)
 		{
-			return CreateMapT::template make<D>(std::forward<T>(args)...);
+			return creator_by_typeid<Base, create_func_T>::template make<D>(std::forward<T>(args)...);
+		}
+		template <class... T>
+		static typename create_func_T::template return_type<Base> make_by_name(const std::string_view name, T&&... args)
+		{
+			return creator_by_typename<Base, create_func_T>::template make_by_name(name, std::forward<T>(args)...);
 		}
 
 		template <class T, class B = Base>
-		struct sub_class : public B, virtual public MakeFinal<T>
+		struct sub_class : public B
 		{
 			friend T;
 
 			static bool trigger()
 			{
-				return type_registration<CreateMapT>::template register_derived<T>();
+				static_assert(std::is_final_v<T>, "sub class should have final specified");
+				type_registration<creator_by_typeid<Base, create_func_T>>::template register_derived<T>();
+				type_registration<creator_by_typename<Base, create_func_T>>::template register_derived<T>();
+				return true;
 			}
 			static bool registered;
 
 		private:
-			sub_class() : B()
+			sub_class(Args... args) : B(std::forward<Args>(args)...)
 			{
 				(void)registered;
 			}
@@ -303,23 +301,13 @@ namespace spiritsaway::entity_component_event
 		basic_poly_factory() = default;
 	};
 
-	template <class CreateMapT, template<typename ...>class ptr_t, 
+	template <template<typename ...>class ptr_t, 
 			  class Base, class... Args>
 	template <class T, class B>
-	bool basic_poly_factory<CreateMapT, ptr_t, Base,
+	bool basic_poly_factory< ptr_t, Base,
 							Args...>::template sub_class<T, B>::registered =
-		basic_poly_factory<CreateMapT, ptr_t, Base,
+		basic_poly_factory<ptr_t, Base,
 						   Args...>::template sub_class<T, B>::trigger();
 
-	
-	template <class Base, template<typename ...>class ptr_t, class... Args>
-	using poly_hash_factory = basic_poly_factory<
-		creator_idx_map<Base, base_creator_func<ptr_t, Base, Args...>>,
-		ptr_t, Base, Args...>;
-
-	template <class Base, template<typename ...>class ptr_t, class... Args>
-	using poly_name_factory = basic_poly_factory<
-		creator_name_map<Base, base_creator_func<ptr_t, Base, Args...>>,
-		ptr_t, Base, Args...>;
 
 } // namespace spiritsaway::entity_mesh

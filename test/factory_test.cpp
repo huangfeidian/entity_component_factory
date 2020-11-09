@@ -5,29 +5,48 @@ using namespace std;
 
 struct Animal
 {
-	virtual void makeNoise() = 0;
-};
-using AnimalFactory = poly_hash_factory<Animal, shr_ptr_t, int>;
-
-
-class Dog : public AnimalFactory::sub_class<Dog> {
 public:
-  Dog(int x) : m_x(x) {}
+	Animal(int x)
+		: m_x(x)
+	{
+
+	}
+	virtual void makeNoise() = 0;
+protected:
+	int m_x;
+
+};
+using AnimalFactory = basic_poly_factory<shr_ptr_t, Animal, int>;
+
+
+class Dog final: public AnimalFactory::sub_class<Dog> {
+public:
+	Dog(int x)
+		: AnimalFactory::sub_class<Dog>(x)
+	{
+
+	}
 public:
   void makeNoise() { std::cerr << "Dog: " << m_x << "\n"; }
-
-protected:
-  int m_x;
+  static std::string_view class_name()
+  {
+	  return "Dog";
+  }
 };
 
-class Cat : public AnimalFactory::sub_class<Cat> {
+class Cat final: public AnimalFactory::sub_class<Cat> {
 public:
-  Cat(int x) : m_x(x) {}
+  Cat(int x)
+	  : AnimalFactory::sub_class<Cat>(x)
+  {
+
+  }
 
   void makeNoise() { std::cerr << "Cat: " << m_x << "\n"; }
-
-protected:
-  int m_x;
+  static std::string_view class_name()
+  {
+	  return "Cat";
+  }
 };
 
 //class Husky : public Dog
@@ -43,20 +62,7 @@ protected:
 //        std::cerr << "Husky: " << m_x << "\n";
 //    }
 //};
-struct Creature : poly_name_factory<Creature, unq_ptr_t, std::unique_ptr<int>> {
-  Creature() {}
-  virtual void makeNoise() = 0;
-};
 
-class Ghost : public Creature::sub_class<Ghost> {
-public:
-  Ghost(std::unique_ptr<int> &&x) : m_x(*x) {}
-
-  void makeNoise() { std::cerr << "Ghost: " << m_x << "\n"; }
-
-private:
-  int m_x;
-};
 
 
 
@@ -66,6 +72,7 @@ void test_hash()
 	auto y = AnimalFactory::make<Cat>(2);
 	x->makeNoise();
 	y->makeNoise();
+
 	//auto xx = Dog(1);
 	//xx.makeNoise();
 	//auto z = new Husky(4);
@@ -82,8 +89,10 @@ void test_hash()
 
 void test_name()
 {
-	auto z = Creature::make<Ghost>(std::make_unique<int>(4));
-	z->makeNoise();
+	auto x = AnimalFactory::make_by_name("Dog", 3);
+	auto y = AnimalFactory::make_by_name("Cat", 2);
+	x->makeNoise();
+	y->makeNoise();
 }
 
 int main() {

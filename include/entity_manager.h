@@ -28,12 +28,18 @@ namespace spiritsaway::entity_component_event
 			return the_one;
 		}
 	private:
-		static std::unordered_set<std::size_t>& all_registered_class()
+		
+		static std::unordered_set<std::size_t>& all_class_ids()
 		{
 			static std::unordered_set<std::size_t> data;
 			return data;
 		}
-		
+		using entity_construc_func = std::function<std::shared_ptr<base_entity>(const std::string&)>;
+		static std::unordered_map<std::string_view, entity_construc_func>& all_named_constructors()
+		{
+			static std::unordered_map<std::string_view, entity_construc_func> data;
+			return data;
+		}
 	public:
 		
 		template <class D>
@@ -45,7 +51,7 @@ namespace spiritsaway::entity_component_event
 				return {};
 			}
 			auto cur_type_id = base_type_hash<base_entity>::template hash<D>();
-			if (all_registered_class().count(cur_type_id) == 0)
+			if (all_class_ids().count(cur_type_id) == 0)
 			{
 				assert(false);
 				return {};
@@ -55,6 +61,24 @@ namespace spiritsaway::entity_component_event
 			instance().add_entity(result);
 			return result;
 		}
+		static std::shared_ptr<base_entity> make(const std::string_view& class_name, const std::string& str_id)
+		{
+			if (instance().has_entity(str_id))
+			{
+				assert(false);
+				return {};
+			}
+			auto constructor_iter = all_named_constructors().find(class_name);
+
+			if (constructor_iter == all_named_constructors().end())
+			{
+				return {};
+			}
+			else
+			{
+				return constructor_iter->second(str_id);
+			}
+		}
 
 		template <class T, class B = base_entity>
 		struct sub_class : public B
@@ -63,7 +87,19 @@ namespace spiritsaway::entity_component_event
 
 			static bool trigger()
 			{
-				entity_manager::all_registered_class().insert(base_type_hash<base_entity>::template hash<T>());
+				static_assert(std::is_final_v<T>, "sub class should be final");
+				auto cur_type_name = type_name<T>();
+				auto cur_type_id = base_type_hash<base_entity>::template hash<T>();
+				auto& register_names = entity_manager::all_named_constructors();
+				auto& register_ids = entity_manager::all_class_ids();
+				assert(register_names.find(cur_type_name) == register_names.end());
+				assert(register_ids.find(cur_type_id) == register_ids.end());
+				register_ids.insert(cur_type_id);
+				register_names.emplace(cur_type_name, [=](const std::string& str_id)
+					{
+						return std::make_shared<T>(entity_construct_key(), cur_type_id, str_id);
+					});
+
 				return true;
 			}
 			static bool registered;
