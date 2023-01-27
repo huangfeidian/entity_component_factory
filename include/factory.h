@@ -213,7 +213,7 @@ namespace spiritsaway::entity_component_event
 		static bool add(CreatorFunc f)
 		{
 			static_assert(std::is_base_of_v<Base, T>, "T should be derivate of Base");
-			auto cur_hash = T::class_name();
+			auto cur_hash = T::static_class_name();
 			auto& data = GetData();
 			bool result = data.find(cur_hash) != data.end();
 			data[cur_hash] = f;
@@ -260,19 +260,46 @@ namespace spiritsaway::entity_component_event
 			  class Base, class... Args>
 	class basic_poly_factory
 	{
-		using create_func_T = base_creator_func<ptr_t, Base, Args...>;
+	public:
+		class construct_key
+		{
+			friend class basic_poly_factory;
+		private:
+			construct_key(std::size_t in_type_id)
+				: m_type_id(in_type_id)
+			{
+
+			}
+		public:
+			const std::size_t m_type_id;
+		};
+	private:
+		using create_func_T = base_creator_func<ptr_t, Base, const construct_key&, Args...>;
+		static std::unordered_map<std::string_view, std::size_t>& name_to_typeid()
+		{
+			static std::unordered_map<std::string_view, std::size_t> m_name_to_id_map;
+			return m_name_to_id_map;
+		}
 	public:
 		template <class D, class... T>
 		static typename create_func_T::template return_type<D> make(T &&... args)
 		{
-			return creator_by_typeid<Base, create_func_T>::template make<D>(std::forward<T>(args)...);
+			return creator_by_typeid<Base, create_func_T>::template make<D>(construct_key{base_type_hash<Base>::template hash<D>()}, std::forward<T>(args)...);
 		}
 		template <class... T>
 		static typename create_func_T::template return_type<Base> make_by_name(const std::string_view name, T&&... args)
 		{
-			return creator_by_typename<Base, create_func_T>::template make_by_name(name, std::forward<T>(args)...);
+			const auto& cur_id_mapper = name_to_typeid();
+			std::size_t result_type_id = 0;
+			auto temp_iter = cur_id_mapper.find(name);
+			if (temp_iter != cur_id_mapper.end())
+			{
+				result_type_id = temp_iter->second;
+			}
+			return creator_by_typename<Base, create_func_T>::template make_by_name(name, construct_key{result_type_id}, std::forward<T>(args)...);
 		}
 
+		
 		template <class T, class B = Base>
 		struct sub_class : public B
 		{
@@ -280,15 +307,17 @@ namespace spiritsaway::entity_component_event
 
 			static bool trigger()
 			{
-				static_assert(std::is_final_v<T>, "sub class should have final specified");
+				// static_assert(std::is_final_v<T>, "sub class should have final specified");
 				type_registration<creator_by_typeid<Base, create_func_T>>::template register_derived<T>();
 				type_registration<creator_by_typename<Base, create_func_T>>::template register_derived<T>();
+				name_to_typeid()[T::static_class_name()] = base_type_hash<Base>::template hash<T>();
+				inherit_mapper<Base>::record_sub_class<T, B>();
 				return true;
 			}
 			static bool registered;
 
 		private:
-			sub_class(Args... args) : B(std::forward<Args>(args)...)
+			sub_class(const construct_key& the_key, Args... args) : B(the_key, std::forward<Args>(args)...)
 			{
 				(void)registered;
 			}
@@ -297,7 +326,7 @@ namespace spiritsaway::entity_component_event
 		friend Base;
 
 	private:
-		using FuncType = ptr_t<Base> (*)(Args...);
+		using FuncType = ptr_t<Base> (*)(const construct_key& ,Args...);
 		basic_poly_factory() = default;
 	};
 

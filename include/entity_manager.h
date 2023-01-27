@@ -106,7 +106,7 @@ namespace spiritsaway::entity_component_event
 
 		private:
 			sub_class(entity_construct_key access_key, std::size_t int_type_id, const std::string& str_id)
-				: B(int_type_id, str_id)
+				: B(access_key, int_type_id, str_id)
 			{
 				(void) registered;
 			}
