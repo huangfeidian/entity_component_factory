@@ -52,7 +52,17 @@ namespace spiritsaway::entity_component_event
 			ClearListeners();
 		}
 	};
+	class entity_construct_key
+	{
+		entity_construct_key(std::size_t in_type_id)
+			: m_type_id(in_type_id)
+		{
 
+		}
+		friend class entity_manager;
+	public:
+		const std::size_t m_type_id;
+	};
 	class base_entity: public dispatcher_entity<base_entity>
 	{
 	protected:
@@ -61,15 +71,15 @@ namespace spiritsaway::entity_component_event
 		bool m_destroyed;
 
 	public:
-		base_entity(std::size_t in_entity_type_id, const std::string& in_entity_id)
+		base_entity(const entity_construct_key& in_entity_type_id, const std::string& in_entity_id)
 			: m_entity_id(in_entity_id)
-			, m_entity_type_id(in_entity_type_id)
+			, m_entity_type_id(in_entity_type_id.m_type_id)
 			, m_destroyed(false)
 		{
 
 		}
 		template <typename T>
-		bool has_type()
+		bool is_exact_type() const
 		{
 			auto dest_entity_type_id = base_type_hash<base_entity>::hash<T>();
 			if (dest_entity_type_id != m_entity_type_id)
@@ -80,6 +90,13 @@ namespace spiritsaway::entity_component_event
 			{
 				return true;
 			}
+		}
+
+		template <typename T>
+		bool is_sub_type() const
+		{
+			auto dest_entity_type_id = base_type_hash<base_entity>::hash<T>();
+			return inherit_mapper<base_entity>::is_sub_class(m_entity_type_id, dest_entity_type_id);
 		}
 		const std::string& entity_id() const
 		{

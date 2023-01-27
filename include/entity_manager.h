@@ -4,18 +4,11 @@
 
 namespace spiritsaway::entity_component_event
 {
-	class entity_construct_key
-	{
-		entity_construct_key()
-		{
 
-		}
-		friend class entity_manager;
-	};
 	class entity_manager
 	{
 
-		std::unordered_map<std::string, shr_ptr_t<base_entity>> _entities;
+		std::unordered_map<std::string, shr_ptr_t<base_entity>> m_entities;
 		entity_manager()
 		{
 
@@ -57,7 +50,7 @@ namespace spiritsaway::entity_component_event
 				return {};
 			}
 
-			auto result = std::make_shared<D>(entity_construct_key(), cur_type_id, str_id);
+			auto result = std::make_shared<D>(entity_construct_key(cur_type_id), str_id);
 			instance().add_entity(result);
 			return result;
 		}
@@ -87,17 +80,18 @@ namespace spiritsaway::entity_component_event
 
 			static bool trigger()
 			{
-				static_assert(std::is_final_v<T>, "sub class should be final");
+				// static_assert(std::is_final_v<T>, "sub class should be final");
 				auto cur_type_name = type_name<T>();
 				auto cur_type_id = base_type_hash<base_entity>::template hash<T>();
 				auto& register_names = entity_manager::all_named_constructors();
 				auto& register_ids = entity_manager::all_class_ids();
+				inherit_mapper<base_entity>::record_sub_class<T, B>();
 				assert(register_names.find(cur_type_name) == register_names.end());
 				assert(register_ids.find(cur_type_id) == register_ids.end());
 				register_ids.insert(cur_type_id);
 				register_names.emplace(cur_type_name, [=](const std::string& str_id)
 					{
-						return std::make_shared<T>(entity_construct_key(), cur_type_id, str_id);
+						return std::make_shared<T>(entity_construct_key(cur_type_id), str_id);
 					});
 
 				return true;
@@ -105,8 +99,8 @@ namespace spiritsaway::entity_component_event
 			static bool registered;
 
 		private:
-			sub_class(entity_construct_key access_key, std::size_t int_type_id, const std::string& str_id)
-				: B(access_key, int_type_id, str_id)
+			sub_class(entity_construct_key access_key, const std::string& str_id)
+				: B(access_key, str_id)
 			{
 				(void) registered;
 			}
@@ -123,17 +117,17 @@ namespace spiritsaway::entity_component_event
 				return false;
 			}
 			auto cur_id = cur_entity->entity_id();
-			if (_entities.find(cur_id) != _entities.end())
+			if (m_entities.find(cur_id) != m_entities.end())
 			{
 				return false;
 			}
-			_entities[cur_id] = cur_entity;
+			m_entities[cur_id] = cur_entity;
 			return true;
 		}
 		std::shared_ptr<base_entity> get_entity(const std::string& id)
 		{
-			auto cur_iter = _entities.find(id);
-			if (cur_iter == _entities.end())
+			auto cur_iter = m_entities.find(id);
+			if (cur_iter == m_entities.end())
 			{
 				return {};
 			}
@@ -144,13 +138,13 @@ namespace spiritsaway::entity_component_event
 		}
 		bool has_entity(const std::string& id) const
 		{
-			return _entities.find(id) != _entities.end();
+			return m_entities.find(id) != m_entities.end();
 		}
 		template <typename T>
 		std::shared_ptr<T> get_entity(const std::string& id) const
 		{
-			auto cur_iter = _entities.find(id);
-			if (cur_iter == _entities.end())
+			auto cur_iter = m_entities.find(id);
+			if (cur_iter == m_entities.end())
 			{
 				return {};
 			}
@@ -167,10 +161,24 @@ namespace spiritsaway::entity_component_event
 			}
 		}
 		template <typename T>
-		std::vector<std::shared_ptr<T>> get_all_entity() const
+		std::vector<std::shared_ptr<T>> get_all_entity_exact_type() const
 		{
 			std::vector<std::shared_ptr> result;
-			for (auto& one_entity : _entities)
+			for (auto& one_entity : m_entities)
+			{
+				if (one_entity.second->is_exact_type<T>())
+				{
+					result.push_back(one_entity.second);
+				}
+			}
+			return result;
+		}
+
+		template <typename T>
+		std::vector<std::shared_ptr<T>> get_all_entity_sub_type() const
+		{
+			std::vector<std::shared_ptr> result;
+			for (auto& one_entity : m_entities)
 			{
 				if (one_entity.second->has_type<T>())
 				{
@@ -183,7 +191,7 @@ namespace spiritsaway::entity_component_event
 		template <typename T>
 		void iterate_all(T func) const
 		{
-			for (auto& one_entity : _entities)
+			for (auto& one_entity : m_entities)
 			{
 				func(*(one_entity.second));
 			}
@@ -192,7 +200,7 @@ namespace spiritsaway::entity_component_event
 		std::size_t iterate_type(T func) const
 		{
 			std::size_t count = 0;
-			for (auto& one_entity : _entities)
+			for (auto& one_entity : m_entities)
 			{
 				if (!one_entity.second->has_type<B>())
 				{
@@ -205,13 +213,13 @@ namespace spiritsaway::entity_component_event
 		}
 		std::size_t total_count() const
 		{
-			return _entities.size();
+			return m_entities.size();
 		}
 		template <typename T>
 		std::size_t type_count() const
 		{
 			std::size_t count = 0;
-			for (auto& one_entity : _entities)
+			for (auto& one_entity : m_entities)
 			{
 				if (!one_entity.second->has_type<B>())
 				{
@@ -223,13 +231,13 @@ namespace spiritsaway::entity_component_event
 		}
 		bool destroy_entity(const std::string& id)
 		{
-			auto cur_iter = _entities.find(id);
-			if (cur_iter == _entities.end())
+			auto cur_iter = m_entities.find(id);
+			if (cur_iter == m_entities.end())
 			{
 				return false;
 			}
 			cur_iter->second->destroy();
-			_entities.erase(cur_iter);
+			m_entities.erase(cur_iter);
 			return true;
 		}
 	};

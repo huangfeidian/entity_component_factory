@@ -8,8 +8,11 @@ namespace spiritsaway::entity_component_event
 	template <typename BaseEntity, typename... Args>
 	class base_component
 	{
+
 	public:
-		base_component(Args... args)
+		using component_factory = basic_poly_factory<raw_ptr_t, base_component, Args...>;
+		base_component(const typename component_factory::construct_key& in_key, Args... args)
+			: m_type_id(in_key.m_type_id)
 		{
 
 		}
@@ -20,6 +23,7 @@ namespace spiritsaway::entity_component_event
 		std::vector<listen_handler<entity_events>> listen_handlers_for_events;
 		std::vector<listen_handler<std::string>> listen_handlers_for_strs;
 	public:
+		const std::size_t m_type_id;
 		BaseEntity* GetOwner()
 		{
 			return _owner;
