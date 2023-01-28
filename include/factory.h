@@ -32,12 +32,12 @@ namespace spiritsaway::entity_component_event
 		{
 		}
 
-		template <class T>
+		template <class D>
 		static base_creator_func instance()
 		{
 			func_type temp = [](Args... args) -> raw_return_type
 			{
-				return return_type(nullptr);
+				return return_type<D>(nullptr);
 			};
 			return base_creator_func(temp);
 		}
@@ -66,12 +66,12 @@ namespace spiritsaway::entity_component_event
 		{
 		}
 
-		template <class T>
+		template <class D>
 		static base_creator_func instance()
 		{
 			func_type temp = [](Args... args) -> raw_return_type
 			{
-				return std::make_unique<T>(std::forward<Args>(args)...);
+				return std::make_unique<D>(std::forward<Args>(args)...);
 			};
 			return base_creator_func(temp);
 		}
@@ -102,12 +102,12 @@ namespace spiritsaway::entity_component_event
 		{
 		}
 
-		template <class T>
+		template <class D>
 		static base_creator_func instance()
 		{
 			func_type temp = [](Args... args) -> raw_return_type
 			{
-				return std::make_shared<T>(std::forward<Args>(args)...);
+				return std::make_shared<D>(std::forward<Args>(args)...);
 			};
 			return base_creator_func(temp);
 		}

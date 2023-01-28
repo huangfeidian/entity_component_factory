@@ -163,12 +163,12 @@ namespace spiritsaway::entity_component_event
 		template <typename T>
 		std::vector<std::shared_ptr<T>> get_all_entity_exact_type() const
 		{
-			std::vector<std::shared_ptr> result;
+			std::vector<std::shared_ptr<T>> result;
 			for (auto& one_entity : m_entities)
 			{
 				if (one_entity.second->is_exact_type<T>())
 				{
-					result.push_back(one_entity.second);
+					result.push_back(std::dynamic_pointer_cast<T>(one_entity.second));
 				}
 			}
 			return result;
@@ -177,12 +177,12 @@ namespace spiritsaway::entity_component_event
 		template <typename T>
 		std::vector<std::shared_ptr<T>> get_all_entity_sub_type() const
 		{
-			std::vector<std::shared_ptr> result;
+			std::vector<std::shared_ptr<T>> result;
 			for (auto& one_entity : m_entities)
 			{
-				if (one_entity.second->has_type<T>())
+				if (one_entity.second->is_sub_type<T>())
 				{
-					result.push_back(one_entity.second);
+					result.push_back(std::dynamic_pointer_cast<T>(one_entity.second));
 				}
 			}
 			return result;
