@@ -150,7 +150,7 @@ namespace spiritsaway::entity_component_event
 			}
 			else
 			{
-				if (!cur_iter->second->has_type<T>())
+				if (!cur_iter->second->is_sub_type<T>())
 				{
 					return {};
 				}
@@ -202,7 +202,7 @@ namespace spiritsaway::entity_component_event
 			std::size_t count = 0;
 			for (auto& one_entity : m_entities)
 			{
-				if (!one_entity.second->has_type<B>())
+				if (!one_entity.second->template is_sub_type<B>())
 				{
 					continue;
 				}
@@ -221,7 +221,7 @@ namespace spiritsaway::entity_component_event
 			std::size_t count = 0;
 			for (auto& one_entity : m_entities)
 			{
-				if (!one_entity.second->has_type<B>())
+				if (!one_entity.second->template is_sub_type<T>())
 				{
 					continue;
 				}

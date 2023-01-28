@@ -43,9 +43,9 @@ namespace spiritsaway::entity_component_event
 		}
 
 		template <typename D>
-		typename return_type<D> create(Args &&... ts)
+		auto create(Args &&... ts)
 		{
-			return return_type<D>(m_func_ptr(std::forward<Ts>(ts)...));
+			return return_type<D>(m_func_ptr(std::forward<Args>(ts)...));
 		}
 
 	private:
@@ -77,7 +77,7 @@ namespace spiritsaway::entity_component_event
 		}
 
 		template <typename D>
-		return_type<D> create(Args &&... ts)
+		auto create(Args &&... ts)
 		{
 			auto temp = m_func_ptr(std::forward<Args>(ts)...);
 			return return_type<D>{dynamic_cast<D*>(temp.release())};
@@ -113,7 +113,7 @@ namespace spiritsaway::entity_component_event
 		}
 
 		template <typename D>
-		typename return_type<D> create(Args &&... ts)
+		auto create(Args &&... ts)
 		{
 			auto temp = m_func_ptr(std::forward<Args>(ts)...);
 			return std::dynamic_pointer_cast<D>(temp);
@@ -139,18 +139,18 @@ namespace spiritsaway::entity_component_event
 		{
 		}
 
-		template <class T>
+		template <class D>
 		static base_creator_func instance()
 		{
 			func_type temp = [](Args... args) -> raw_return_type
 			{
-				return new T(std::forward<Args>(args)...);
+				return new D(std::forward<Args>(args)...);
 			};
 			return base_creator_func(temp);
 		}
 
 		template <typename D, class... Ts>
-		typename return_type<D> create(Ts &&... ts)
+		auto create(Ts &&... ts)
 		{
 			return dynamic_cast<return_type<D>>(m_func_ptr(std::forward<Ts>(ts)...));
 		}
@@ -171,7 +171,7 @@ namespace spiritsaway::entity_component_event
 		static bool add(CreatorFunc f)
 		{
 			static_assert(std::is_base_of_v<Base, T>, "T should be derivate of Base");
-			auto cur_hash = base_type_hash<Base>::hash<T>();
+			auto cur_hash = base_type_hash<Base>::template hash<T>();
 			auto& data = GetData();
 
 			bool result = data.find(cur_hash) != data.end();
@@ -182,14 +182,14 @@ namespace spiritsaway::entity_component_event
 		static auto make(Ts &&... args)
 		{
 			static_assert(std::is_base_of_v<Base, T>, "T should be derivate of Base");
-			auto cur_hash = base_type_hash<Base>::hash<T>();
+			auto cur_hash = base_type_hash<Base>::template hash<T>();
 			auto& data = GetData();
 
 			auto cur_iter = data.find(cur_hash);
 			if (cur_iter == data.end())
 			{
 				assert(false);
-				return FuncT::template return_type<T>();
+				return typename FuncT::template return_type<T>();
 			}
 			else
 			{
@@ -228,7 +228,7 @@ namespace spiritsaway::entity_component_event
 			{
 				assert(false);
 
-				return FuncT::template return_type<Base>();
+				return typename FuncT::template return_type<Base>();
 			}
 			else
 			{
@@ -250,7 +250,7 @@ namespace spiritsaway::entity_component_event
 		static bool register_derived()
 		{
 			auto factory = CreateMapT::FuncT::template instance<derived>();
-			CreateMapT::add<derived>(factory);
+			CreateMapT::template add<derived>(factory);
 			return true;
 		}
 	};
@@ -311,7 +311,7 @@ namespace spiritsaway::entity_component_event
 				type_registration<creator_by_typeid<Base, create_func_T>>::template register_derived<T>();
 				type_registration<creator_by_typename<Base, create_func_T>>::template register_derived<T>();
 				name_to_typeid()[T::static_class_name()] = base_type_hash<Base>::template hash<T>();
-				inherit_mapper<Base>::record_sub_class<T, B>();
+				inherit_mapper<Base>::template record_sub_class<T, B>();
 				return true;
 			}
 			static bool registered;
